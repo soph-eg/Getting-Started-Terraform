@@ -1,14 +1,16 @@
 /*
+This a multiline comment 
 This Terraform configuration sets up a basic web application on AWS using an EC2 instance running Nginx.
 It includes the necessary networking components such as a VPC, subnet, internet gateway, and security groups.
 AWS credentials are required to apply this configuration and can be set using environment variables or the AWS CLI.
 */
 
+#saying we would like to use version 5 of aws provider, terraform will go and find this #
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 5.0"              
     }
   }
 }
@@ -22,7 +24,7 @@ provider "aws" {
 }
 
 ##################################################################################
-# DATA
+# DATA - way to query info from a platform/service. Arguments in data source depend on the type of data. We are querying the data from the AWS provider, we can't make any changes to what we receieve 
 ##################################################################################
 
 data "aws_ssm_parameter" "amzn2_linux" {
@@ -34,6 +36,11 @@ data "aws_ssm_parameter" "amzn2_linux" {
 ##################################################################################
 
 # NETWORKING #
+/*
+these are all the resources created for networking purposes 
+vpc = vnet in azure
+*/
+
 resource "aws_vpc" "app" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -67,6 +74,7 @@ resource "aws_route_table_association" "app_subnet1" {
 }
 
 # SECURITY GROUPS #
+# all the resources for security
 # Nginx security group 
 resource "aws_security_group" "nginx_sg" {
   name   = "nginx_sg"
@@ -97,15 +105,23 @@ resource "aws_instance" "nginx1" {
   vpc_security_group_ids = [aws_security_group.nginx_sg.id]
   user_data_replace_on_change = true
 
-  user_data = <<EOF
-#! /bin/bash
-sudo amazon-linux-extras install -y nginx1
-sudo service nginx start
-sudo rm /usr/share/nginx/html/index.html
-sudo cat > /usr/share/nginx/html/index.html << 'WEBSITE'
+  # Heredoc for user_data — cleanly formatted for Terraform v1.14.6
+  user_data = <<-EOF
+    #!/bin/bash
+    # Install Nginx
+    sudo amazon-linux-extras install -y nginx1
+
+    # Start Nginx
+    sudo service nginx start
+
+    # Remove default index
+    sudo rm -f /usr/share/nginx/html/index.html
+
+    # Write custom HTML
+    sudo tee /usr/share/nginx/html/index.html > /dev/null <<WEBSITE
 <html>
 <head>
-    <title>Taco Team Server</title>
+  <title>Taco Team Server</title>
 </head>
 <body style="background-color:#1F778D">
     <p style="text-align: center;">
@@ -117,5 +133,7 @@ sudo cat > /usr/share/nginx/html/index.html << 'WEBSITE'
 </html>
 WEBSITE
 EOF
-
 }
+
+
+## above is script that will run when we start an instance for the first time, <<EOF....EOF allows multi line text for user data argument and keeps formatting as you write it #

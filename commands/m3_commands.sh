@@ -1,5 +1,5 @@
 # In this module, we are simply trying to get the configuration deployed.
-# First we'll copy our file from the base_web_app to a working directory
+# First we'll copy our file from the base_web_app to a working directory (cp)
 mkdir globo_web_app
 cp ./base_web_app/main.tf ./globo_web_app/main.tf
 
